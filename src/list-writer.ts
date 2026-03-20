@@ -98,17 +98,18 @@ export async function createCuratelist(
         // Wait 100ms before next member (throttle delay)
         await new Promise((resolve) => setTimeout(resolve, 100))
       } catch (error) {
-        // Cast to any to safely access error properties that may not be typed
-        // (status code and headers may not be defined on the Error type)
-        const errorObj = error as any
+        // Narrow the error to check for rate limiting
+        const errorObj = error instanceof Object ? error as Record<string, unknown> : {}
+        const status = typeof errorObj.status === 'number' ? errorObj.status : 0
+        const headers = errorObj.headers instanceof Object ? errorObj.headers as Record<string, string> : null
 
         // Check for rate limit (429)
-        if (errorObj?.status === 429) {
+        if (status === 429) {
           let waitTime = backoffDelay
 
           // Check for RateLimit-Reset header
-          if (errorObj?.headers?.['RateLimit-Reset']) {
-            const resetTimestamp = parseInt(errorObj.headers['RateLimit-Reset'], 10)
+          if (headers?.['RateLimit-Reset']) {
+            const resetTimestamp = parseInt(headers['RateLimit-Reset'], 10)
             const now = Date.now()
             waitTime = Math.max(0, resetTimestamp * 1000 - now)
           }
@@ -128,7 +129,7 @@ export async function createCuratelist(
           }
         } else {
           // Non-429 error: collect and continue
-          const errorMessage = errorObj?.message || String(error)
+          const errorMessage = error instanceof Error ? error.message : String(error)
           errors.push({
             did: memberDid,
             error: errorMessage

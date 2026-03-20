@@ -18,8 +18,11 @@ export interface AuthState {
 // Store the current auth client instance
 let client: BrowserOAuthClient | null = null
 let currentAuthState: AuthState | null = null
-// @atproto/oauth-client-browser does not export the Session type, so we use any
-let currentSession: any = null
+// Minimal interface for the session object — the library doesn't export its type
+interface OAuthSession {
+  signOut(): Promise<void>
+}
+let currentSession: OAuthSession | null = null
 
 /**
  * Initializes the auth module.

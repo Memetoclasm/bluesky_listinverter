@@ -96,6 +96,21 @@ The production build is output to the `dist/` directory.
 - Fully responsive design (mobile & desktop)
 - No external dependencies or build bloat
 
+## Security and Privacy
+
+**No backend server.** This app runs entirely in your browser. No data is sent anywhere except directly to Bluesky's own APIs.
+
+**Reading lists requires no login.** List fetching uses Bluesky's public API (`public.api.bsky.app`) with no authentication. Your credentials are never involved in reading.
+
+**Writing uses OAuth with DPoP.** When you log in, the app gets an OAuth token scoped to your Bluesky account. This token is:
+- Stored in your browser's IndexedDB (managed by `@atproto/oauth-client-browser`)
+- Never sent to any third-party server
+- DPoP-bound, meaning it is cryptographically tied to the browser session that created it and cannot be stolen and replayed from another device
+
+**OAuth scope.** The token uses `atproto transition:generic`, which is the standard broad scope for AT Protocol apps. This is an ecosystem-wide limitation — AT Protocol does not yet support narrower scopes. The app only uses the token to create list records and list item records on your account.
+
+**Your password is never seen by this app.** OAuth redirects you to Bluesky's own login page. The app only receives a token after you authorize it.
+
 ## License
 
 MIT

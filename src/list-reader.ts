@@ -17,6 +17,12 @@ export function parseListUrl(url: string): {
 } | null {
   try {
     const parsed = new URL(url)
+
+    // Validate it's a bsky.app URL
+    if (parsed.hostname !== 'bsky.app') {
+      return null
+    }
+
     const pathMatch = parsed.pathname.match(/^\/profile\/([^/]+)\/lists\/([^/]+)$/)
 
     if (!pathMatch) {

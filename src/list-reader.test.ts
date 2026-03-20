@@ -77,7 +77,7 @@ describe('resolveHandleToDid', () => {
     })
 
     await expect(resolveHandleToDid('nonexistent.bsky.social')).rejects.toThrow(
-      /Could not resolve handle/
+      /Failed to resolve handle/
     )
   })
 })

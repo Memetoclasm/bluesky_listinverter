@@ -4,6 +4,17 @@
  */
 
 /**
+ * Custom error class for intentional API errors thrown by this module.
+ * Used to distinguish between expected errors (404, validation) and unexpected ones.
+ */
+class ApiError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+/**
  * Parses a Bluesky list URL into components.
  * URL format: https://bsky.app/profile/{handle-or-did}/lists/{rkey}
  *
@@ -56,24 +67,28 @@ export async function resolveHandleToDid(handle: string): Promise<string> {
     const response = await fetch(url)
 
     if (!response.ok) {
-      throw new Error(`Failed to resolve handle: ${response.statusText}`)
+      throw new ApiError(`Failed to resolve handle: ${response.statusText}`)
     }
 
     const data = (await response.json()) as { did: string }
     return data.did
   } catch (error) {
+    // Only wrap unexpected errors; re-throw intentional ApiError as-is
+    if (error instanceof ApiError) {
+      throw error
+    }
     const message = error instanceof Error ? error.message : String(error)
     throw new Error(`Could not resolve handle "${handle}": ${message}`)
   }
 }
 
-interface ListMember {
+export interface ListMember {
   did: string
   handle: string
   displayName?: string
 }
 
-interface ListData {
+export interface ListData {
   list: {
     name: string
     description?: string
@@ -92,7 +107,7 @@ interface ListData {
  */
 export async function fetchListMembers(atUri: string): Promise<ListData> {
   const baseUrl = 'https://public.api.bsky.app/xrpc/app.bsky.graph.getList'
-  const params = new URLSearchParams({
+  const baseParams = new URLSearchParams({
     list: atUri,
     limit: '100'
   })
@@ -103,16 +118,20 @@ export async function fetchListMembers(atUri: string): Promise<ListData> {
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const url = `${baseUrl}?${params.toString()}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`
+    const params = new URLSearchParams(baseParams)
+    if (cursor) {
+      params.set('cursor', cursor)
+    }
+    const url = `${baseUrl}?${params.toString()}`
 
     try {
       const response = await fetch(url)
 
       if (!response.ok) {
         if (response.status === 404) {
-          throw new Error('List not found')
+          throw new ApiError('List not found')
         }
-        throw new Error(`API error: ${response.statusText}`)
+        throw new ApiError(`API error: ${response.statusText}`)
       }
 
       interface ApiResponse {
@@ -154,6 +173,10 @@ export async function fetchListMembers(atUri: string): Promise<ListData> {
 
       cursor = data.cursor
     } catch (error) {
+      // Only wrap unexpected errors; re-throw intentional ApiError as-is
+      if (error instanceof ApiError) {
+        throw error
+      }
       const message = error instanceof Error ? error.message : String(error)
       throw new Error(`Failed to fetch list members: ${message}`)
     }

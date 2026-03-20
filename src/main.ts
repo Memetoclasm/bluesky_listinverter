@@ -3,12 +3,12 @@
  * Wires the list reading and UI modules together.
  */
 
-import { parseListUrl, resolveHandleToDid, fetchListMembers } from './list-reader'
+import { parseListUrl, resolveHandleToDid, fetchListMembers, type ListData, type ListMember } from './list-reader'
 import { showError, clearError, showPreview, setLoading } from './ui'
 
 // Module-level variables to store fetched data for later use (Phase 4+)
-export let fetchedListData: { list: { name: string; description?: string; purpose?: string; listItemCount?: number }; members: Array<{ did: string; handle: string; displayName?: string }> } | null = null
-export let fetchedMembers: Array<{ did: string; handle: string; displayName?: string }> = []
+export let fetchedListData: ListData | null = null
+export let fetchedMembers: ListMember[] = []
 
 /**
  * Initializes the main UI flow on DOM load.

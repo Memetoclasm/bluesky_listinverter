@@ -35,12 +35,13 @@ export async function init(): Promise<AuthState | null> {
     handleResolver: 'https://bsky.social'
   })
 
-  // Register listener for cross-tab session invalidation
-  // BrowserOAuthClient type definitions don't include addEventListener method (browser event API)
-  ;(client as any).addEventListener('deleted', () => {
-    currentAuthState = null
-    currentSession = null
-  })
+  // Register listener for cross-tab session invalidation (if supported by this version)
+  if (typeof (client as any).addEventListener === 'function') {
+    (client as any).addEventListener('deleted', () => {
+      currentAuthState = null
+      currentSession = null
+    })
+  }
 
   // Initialize: detects callback params or restores session from IndexedDB
   // This may throw on callback processing errors

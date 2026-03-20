@@ -113,3 +113,122 @@ function escapeHtml(text: string): string {
   div.textContent = text
   return div.innerHTML
 }
+
+/**
+ * Shows the auth section with a login form.
+ *
+ * @param onLogin - Callback when user submits handle
+ */
+export function showAuthSection(onLogin: (handle: string) => void): void {
+  const authSection = document.getElementById('auth-section')
+  if (!authSection) return
+
+  // Clear any previous error messages
+  const errorDiv = authSection.querySelector('.auth-error')
+  if (errorDiv) {
+    errorDiv.remove()
+  }
+
+  // Build login form
+  let html = `
+    <div class="auth-form">
+      <label for="auth-handle">Bluesky handle:</label>
+      <input
+        type="text"
+        id="auth-handle"
+        placeholder="your-handle.bsky.social"
+      />
+      <button id="auth-login-btn" type="button">Log in with Bluesky</button>
+    </div>
+  `
+
+  authSection.innerHTML = html
+  authSection.hidden = false
+
+  // Set up event listener
+  const loginBtn = authSection.querySelector('#auth-login-btn') as HTMLButtonElement | null
+  const handleInput = authSection.querySelector('#auth-handle') as HTMLInputElement | null
+
+  if (loginBtn && handleInput) {
+    const handleClick = () => {
+      const handle = handleInput.value.trim()
+      if (handle) {
+        onLogin(handle)
+      }
+    }
+
+    // Allow Enter key to submit
+    handleInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleClick()
+      }
+    })
+
+    loginBtn.addEventListener('click', handleClick)
+  }
+}
+
+/**
+ * Shows the logged-in state in the auth section.
+ *
+ * @param handle - The user's Bluesky handle
+ * @param onLogout - Callback when user clicks logout
+ */
+export function showLoggedIn(handle: string, onLogout: () => void): void {
+  const authSection = document.getElementById('auth-section')
+  if (!authSection) return
+
+  const html = `
+    <div class="auth-logged-in">
+      <p>Logged in as @${escapeHtml(handle)}</p>
+      <button id="auth-logout-btn" type="button">Log out</button>
+    </div>
+  `
+
+  authSection.innerHTML = html
+  authSection.hidden = false
+
+  const logoutBtn = authSection.querySelector('#auth-logout-btn') as HTMLButtonElement | null
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', onLogout)
+  }
+}
+
+/**
+ * Hides the auth section.
+ */
+export function hideAuthSection(): void {
+  const authSection = document.getElementById('auth-section')
+  if (authSection) {
+    authSection.hidden = true
+  }
+}
+
+/**
+ * Shows an auth error message with a try again affordance.
+ * Does not hide the login form.
+ *
+ * @param message - The error message to display
+ */
+export function showAuthError(message: string): void {
+  const authSection = document.getElementById('auth-section')
+  if (!authSection) return
+
+  // Remove any existing error message
+  const existingError = authSection.querySelector('.auth-error')
+  if (existingError) {
+    existingError.remove()
+  }
+
+  // Create error div
+  const errorDiv = document.createElement('div')
+  errorDiv.className = 'auth-error'
+  errorDiv.innerHTML = `
+    <p style="color: red; margin-top: 1em;">
+      ${escapeHtml(message)}
+    </p>
+  `
+
+  // Append to auth section (after login form)
+  authSection.appendChild(errorDiv)
+}

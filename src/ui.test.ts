@@ -1,5 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { showError, clearError, showPreview, hidePreview, setLoading } from './ui'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import {
+  showError,
+  clearError,
+  showPreview,
+  hidePreview,
+  setLoading,
+  showAuthSection,
+  showLoggedIn,
+  hideAuthSection,
+  showAuthError
+} from './ui'
 
 describe('UI Helpers', () => {
   beforeEach(() => {
@@ -144,6 +154,200 @@ describe('UI Helpers', () => {
       setLoading(button, false)
 
       expect(button.textContent).toBe('Original')
+    })
+  })
+
+  describe('showAuthSection', () => {
+    it('shows auth section with login form', () => {
+      const onLogin = vi.fn()
+      showAuthSection(onLogin)
+
+      const authSection = document.getElementById('auth-section')
+      expect(authSection?.hidden).toBe(false)
+
+      const handleInput = authSection?.querySelector('#auth-handle') as HTMLInputElement
+      const loginBtn = authSection?.querySelector('#auth-login-btn') as HTMLButtonElement
+
+      expect(handleInput).toBeTruthy()
+      expect(loginBtn).toBeTruthy()
+      expect(loginBtn?.textContent).toContain('Log in with Bluesky')
+    })
+
+    it('calls onLogin with handle when button is clicked', () => {
+      const onLogin = vi.fn()
+      showAuthSection(onLogin)
+
+      const authSection = document.getElementById('auth-section')
+      const handleInput = authSection?.querySelector('#auth-handle') as HTMLInputElement
+      const loginBtn = authSection?.querySelector('#auth-login-btn') as HTMLButtonElement
+
+      handleInput.value = 'alice.bsky.social'
+      loginBtn.click()
+
+      expect(onLogin).toHaveBeenCalledWith('alice.bsky.social')
+    })
+
+    it('calls onLogin when Enter key is pressed in input', () => {
+      const onLogin = vi.fn()
+      showAuthSection(onLogin)
+
+      const authSection = document.getElementById('auth-section')
+      const handleInput = authSection?.querySelector('#auth-handle') as HTMLInputElement
+
+      handleInput.value = 'bob.bsky.social'
+
+      // Simulate Enter key press
+      const event = new KeyboardEvent('keypress', { key: 'Enter' })
+      handleInput.dispatchEvent(event)
+
+      expect(onLogin).toHaveBeenCalledWith('bob.bsky.social')
+    })
+
+    it('trims whitespace from handle before calling onLogin', () => {
+      const onLogin = vi.fn()
+      showAuthSection(onLogin)
+
+      const authSection = document.getElementById('auth-section')
+      const handleInput = authSection?.querySelector('#auth-handle') as HTMLInputElement
+      const loginBtn = authSection?.querySelector('#auth-login-btn') as HTMLButtonElement
+
+      handleInput.value = '  charlie.bsky.social  '
+      loginBtn.click()
+
+      expect(onLogin).toHaveBeenCalledWith('charlie.bsky.social')
+    })
+
+    it('does not call onLogin if handle is empty', () => {
+      const onLogin = vi.fn()
+      showAuthSection(onLogin)
+
+      const authSection = document.getElementById('auth-section')
+      const loginBtn = authSection?.querySelector('#auth-login-btn') as HTMLButtonElement
+
+      loginBtn.click()
+
+      expect(onLogin).not.toHaveBeenCalled()
+    })
+
+    it('clears previous error messages when showing auth section', () => {
+      const authSection = document.getElementById('auth-section')!
+
+      // Create an error message first
+      const errorDiv = document.createElement('div')
+      errorDiv.className = 'auth-error'
+      errorDiv.textContent = 'Old error'
+      authSection.appendChild(errorDiv)
+
+      showAuthSection(() => {})
+
+      // Error should be removed
+      const remainingError = authSection.querySelector('.auth-error')
+      expect(remainingError).toBeNull()
+    })
+  })
+
+  describe('showLoggedIn', () => {
+    it('shows logged in state with handle and logout button', () => {
+      const onLogout = vi.fn()
+      showLoggedIn('alice.bsky.social', onLogout)
+
+      const authSection = document.getElementById('auth-section')
+      expect(authSection?.hidden).toBe(false)
+      expect(authSection?.textContent).toContain('Logged in as @alice.bsky.social')
+
+      const logoutBtn = authSection?.querySelector('#auth-logout-btn') as HTMLButtonElement
+      expect(logoutBtn).toBeTruthy()
+      expect(logoutBtn?.textContent).toBe('Log out')
+    })
+
+    it('calls onLogout when logout button is clicked', () => {
+      const onLogout = vi.fn()
+      showLoggedIn('bob.bsky.social', onLogout)
+
+      const authSection = document.getElementById('auth-section')
+      const logoutBtn = authSection?.querySelector('#auth-logout-btn') as HTMLButtonElement
+
+      logoutBtn.click()
+
+      expect(onLogout).toHaveBeenCalled()
+    })
+
+    it('escapes handle to prevent XSS', () => {
+      const onLogout = vi.fn()
+      showLoggedIn('<script>alert("xss")</script>', onLogout)
+
+      const authSection = document.getElementById('auth-section')
+      expect(authSection?.innerHTML).not.toContain('<script>')
+      expect(authSection?.innerHTML).toContain('&lt;script&gt;')
+    })
+  })
+
+  describe('hideAuthSection', () => {
+    it('hides auth section', () => {
+      const authSection = document.getElementById('auth-section')
+      authSection!.hidden = false
+
+      hideAuthSection()
+
+      expect(authSection?.hidden).toBe(true)
+    })
+  })
+
+  describe('showAuthError', () => {
+    it('shows error message in auth section', () => {
+      const authSection = document.getElementById('auth-section')
+      authSection!.hidden = false
+      authSection!.innerHTML = '<form></form>'
+
+      showAuthError('Login failed')
+
+      const errorDiv = authSection?.querySelector('.auth-error')
+      expect(errorDiv).toBeTruthy()
+      expect(errorDiv?.textContent).toContain('Login failed')
+    })
+
+    it('removes previous error message before showing new one', () => {
+      const authSection = document.getElementById('auth-section')
+      authSection!.innerHTML = `
+        <form></form>
+        <div class="auth-error">Old error</div>
+      `
+
+      showAuthError('New error')
+
+      const errorDivs = authSection?.querySelectorAll('.auth-error')
+      expect(errorDivs?.length).toBe(1)
+      expect(errorDivs?.[0].textContent).toContain('New error')
+    })
+
+    it('escapes error message to prevent XSS', () => {
+      const authSection = document.getElementById('auth-section')
+      authSection!.hidden = false
+
+      showAuthError('<script>alert("xss")</script>')
+
+      const errorDiv = authSection?.querySelector('.auth-error')
+      expect(errorDiv?.innerHTML).not.toContain('<script>')
+      expect(errorDiv?.innerHTML).toContain('&lt;script&gt;')
+    })
+
+    it('appends error to auth section without removing form', () => {
+      const authSection = document.getElementById('auth-section')
+      authSection!.innerHTML = `
+        <div class="auth-form">
+          <input id="test-input" />
+        </div>
+      `
+
+      showAuthError('Error message')
+
+      // Form should still exist
+      const input = authSection?.querySelector('#test-input')
+      expect(input).toBeTruthy()
+
+      // Error should be added
+      const errorDiv = authSection?.querySelector('.auth-error')
+      expect(errorDiv).toBeTruthy()
     })
   })
 })

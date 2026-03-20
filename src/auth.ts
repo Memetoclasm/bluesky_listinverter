@@ -18,36 +18,48 @@ export interface AuthState {
 // Store the current auth client instance
 let client: BrowserOAuthClient | null = null
 let currentAuthState: AuthState | null = null
+let currentSession: any = null
 
 /**
  * Initializes the auth module.
  * Detects OAuth callback or restores existing session from IndexedDB.
  *
  * @returns AuthState with did, handle, and agent on success, or null if not authenticated
+ * @throws Error if OAuth callback processing fails (caller should handle and display error UI)
  */
 export async function init(): Promise<AuthState | null> {
+  // Load or create the BrowserOAuthClient
+  client = await BrowserOAuthClient.load({
+    clientId: window.location.origin + '/bsky-list-converter/client-metadata.json',
+    handleResolver: 'https://bsky.social'
+  })
+
+  // Register listener for cross-tab session invalidation
+  ;(client as any).addEventListener('deleted', () => {
+    currentAuthState = null
+    currentSession = null
+  })
+
+  // Initialize: detects callback params or restores session from IndexedDB
+  // This may throw on callback processing errors
+  const result = await client.init()
+
+  // If no session was found, return null
+  if (!result) {
+    return null
+  }
+
+  const { session, state } = result
+
+  // If this was a fresh OAuth callback, clean up the URL
+  if (state !== undefined) {
+    history.replaceState({}, document.title, window.location.pathname)
+  }
+
+  // Store the session for use in logout
+  currentSession = session
+
   try {
-    // Load or create the BrowserOAuthClient
-    client = await BrowserOAuthClient.load({
-      clientId: window.location.origin + '/bsky-list-converter/client-metadata.json',
-      handleResolver: 'https://bsky.social'
-    })
-
-    // Initialize: detects callback params or restores session from IndexedDB
-    const result = await client.init()
-
-    // If no session was found, return null
-    if (!result) {
-      return null
-    }
-
-    const { session, state } = result
-
-    // If this was a fresh OAuth callback, clean up the URL
-    if (state !== undefined) {
-      history.replaceState({}, document.title, window.location.pathname)
-    }
-
     // Fetch user profile to get handle
     const agent = new Agent(session)
     const profileResponse = await agent.getProfile({ actor: session.did })
@@ -62,9 +74,8 @@ export async function init(): Promise<AuthState | null> {
 
     return currentAuthState
   } catch (error) {
-    // Catch and return null on error
-    // This allows the UI to show unauthenticated state
-    return null
+    // If profile fetch fails, propagate the error to the caller
+    throw error
   }
 }
 
@@ -80,13 +91,8 @@ export async function login(handle: string): Promise<void> {
     throw new Error('Auth module not initialized')
   }
 
-  try {
-    // This call redirects the browser and never resolves normally
-    await client.signIn(handle)
-  } catch (error) {
-    // Error propagates to caller for UI handling
-    throw error
-  }
+  // This call redirects the browser and never resolves normally
+  await client.signIn(handle)
 }
 
 /**
@@ -95,15 +101,12 @@ export async function login(handle: string): Promise<void> {
  */
 export async function logout(): Promise<void> {
   try {
-    if (currentAuthState) {
-      // Get the session manager and call signOut
-      const sessionManager = (currentAuthState.agent as any).sessionManager
-      if (sessionManager && typeof sessionManager.signOut === 'function') {
-        await sessionManager.signOut()
-      }
+    if (currentSession && typeof currentSession.signOut === 'function') {
+      await currentSession.signOut()
     }
     // Clear stored auth state
     currentAuthState = null
+    currentSession = null
 
     // Clear any localStorage data
     try {
@@ -132,4 +135,5 @@ export function getAuthState(): AuthState | null {
 export function _resetAuthState(): void {
   client = null
   currentAuthState = null
+  currentSession = null
 }

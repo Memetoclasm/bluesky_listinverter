@@ -34,7 +34,8 @@ describe('Auth Module', () => {
         init: vi.fn().mockResolvedValue({
           session: mockSession,
           state: 'callback-token'
-        })
+        }),
+        addEventListener: vi.fn()
       }
 
       vi.mocked(BrowserOAuthClient.load).mockResolvedValue(mockClient as any)
@@ -45,7 +46,9 @@ describe('Auth Module', () => {
         })
       }
 
-      vi.mocked(Agent).mockImplementation(() => mockAgent as any)
+      vi.mocked(Agent).mockImplementation((function(this: any) {
+        Object.assign(this, mockAgent)
+      }) as any)
 
       const originalLocation = window.location
       delete (window as any).location
@@ -55,19 +58,20 @@ describe('Auth Module', () => {
         const result = await authModule.init()
 
         // Should successfully return auth state
-        if (result) {
-          expect(result.did).toBe('did:plc:test123')
-          expect(result.handle).toBe('test.bsky.social')
-        }
+        expect(result).not.toBeNull()
+        const authState = result!
+        expect(authState.did).toBe('did:plc:test123')
+        expect(authState.handle).toBe('test.bsky.social')
       } finally {
         ;(window as any).location = originalLocation
       }
     })
 
-    it('AC2.4: returns null when client.init() throws', async () => {
-      // When OAuth init fails, module catches error and returns null
+    it('AC2.4: throws error when client.init() throws', async () => {
+      // When OAuth init fails, module propagates the error
       const mockClient = {
-        init: vi.fn().mockRejectedValue(new Error('OAuth init failed'))
+        init: vi.fn().mockRejectedValue(new Error('OAuth init failed')),
+        addEventListener: vi.fn()
       }
 
       vi.mocked(BrowserOAuthClient.load).mockResolvedValue(mockClient as any)
@@ -77,10 +81,8 @@ describe('Auth Module', () => {
       ;(window as any).location = { origin: 'http://localhost:3000' }
 
       try {
-        const result = await authModule.init()
-
-        // Should handle error gracefully and return null
-        expect(result).toBeNull()
+        // Should throw error to caller
+        await expect(authModule.init()).rejects.toThrow('OAuth init failed')
       } finally {
         ;(window as any).location = originalLocation
       }
@@ -89,7 +91,8 @@ describe('Auth Module', () => {
     it('returns null when no session is found', async () => {
       // When init() resolves with undefined, no session exists
       const mockClient = {
-        init: vi.fn().mockResolvedValue(undefined)
+        init: vi.fn().mockResolvedValue(undefined),
+        addEventListener: vi.fn()
       }
 
       vi.mocked(BrowserOAuthClient.load).mockResolvedValue(mockClient as any)
@@ -113,7 +116,8 @@ describe('Auth Module', () => {
       // When login is called and signIn fails, error should propagate to caller
       const mockClient = {
         init: vi.fn().mockResolvedValue(undefined),
-        signIn: vi.fn().mockRejectedValue(new Error('Sign in error'))
+        signIn: vi.fn().mockRejectedValue(new Error('Sign in error')),
+        addEventListener: vi.fn()
       }
 
       vi.mocked(BrowserOAuthClient.load).mockResolvedValue(mockClient as any)
@@ -145,12 +149,16 @@ describe('Auth Module', () => {
   describe('logout', () => {
     it('AC2.3: clears auth state on logout', async () => {
       // After logout, auth state should be cleared
-      const mockSession = { did: 'did:plc:logout123' }
+      const mockSession = {
+        did: 'did:plc:logout123',
+        signOut: vi.fn().mockResolvedValue(undefined)
+      }
       const mockClient = {
         init: vi.fn().mockResolvedValue({
           session: mockSession,
           state: 'callback'
-        })
+        }),
+        addEventListener: vi.fn()
       }
 
       vi.mocked(BrowserOAuthClient.load).mockResolvedValue(mockClient as any)
@@ -158,13 +166,12 @@ describe('Auth Module', () => {
       const mockAgent = {
         getProfile: vi.fn().mockResolvedValue({
           data: { handle: 'logout.bsky.social' }
-        }),
-        sessionManager: {
-          signOut: vi.fn().mockResolvedValue(undefined)
-        }
+        })
       }
 
-      vi.mocked(Agent).mockImplementation(() => mockAgent as any)
+      vi.mocked(Agent).mockImplementation((function(this: any) {
+        Object.assign(this, mockAgent)
+      }) as any)
 
       const originalLocation = window.location
       delete (window as any).location
@@ -174,14 +181,16 @@ describe('Auth Module', () => {
         // Initialize to authenticated state
         const authState = await authModule.init()
 
-        if (authState) {
-          // Call logout
-          await authModule.logout()
+        // Verify init succeeded
+        expect(authState).not.toBeNull()
+        expect(authState!.did).toBe('did:plc:logout123')
 
-          // After logout, getAuthState should return null (state is cleared)
-          const state = authModule.getAuthState()
-          expect(state).toBeNull()
-        }
+        // Call logout
+        await authModule.logout()
+
+        // After logout, getAuthState should return null (state is cleared)
+        const state = authModule.getAuthState()
+        expect(state).toBeNull()
       } finally {
         ;(window as any).location = originalLocation
       }
@@ -189,12 +198,16 @@ describe('Auth Module', () => {
 
     it('handles errors during logout gracefully', async () => {
       // When logout encounters an error, it should log but not throw
-      const mockSession = { did: 'did:plc:error123' }
+      const mockSession = {
+        did: 'did:plc:error123',
+        signOut: vi.fn().mockRejectedValue(new Error('SignOut failed'))
+      }
       const mockClient = {
         init: vi.fn().mockResolvedValue({
           session: mockSession,
           state: 'callback'
-        })
+        }),
+        addEventListener: vi.fn()
       }
 
       vi.mocked(BrowserOAuthClient.load).mockResolvedValue(mockClient as any)
@@ -202,13 +215,12 @@ describe('Auth Module', () => {
       const mockAgent = {
         getProfile: vi.fn().mockResolvedValue({
           data: { handle: 'error.bsky.social' }
-        }),
-        sessionManager: {
-          signOut: vi.fn().mockRejectedValue(new Error('SignOut failed'))
-        }
+        })
       }
 
-      vi.mocked(Agent).mockImplementation(() => mockAgent as any)
+      vi.mocked(Agent).mockImplementation((function(this: any) {
+        Object.assign(this, mockAgent)
+      }) as any)
 
       const originalLocation = window.location
       delete (window as any).location
@@ -221,18 +233,15 @@ describe('Auth Module', () => {
       try {
         const authState = await authModule.init()
 
-        // If init succeeded and has auth state with sessionManager that throws
-        if (authState) {
-          // Logout should not throw even if signOut fails
-          await expect(authModule.logout()).resolves.toBeUndefined()
+        // Verify init succeeded
+        expect(authState).not.toBeNull()
+        expect(authState!.did).toBe('did:plc:error123')
 
-          // Should have logged the error
-          expect(consoleErrorSpy).toHaveBeenCalled()
-        } else {
-          // If init didn't work, test that logout still works and clears state
-          await authModule.logout()
-          expect(authModule.getAuthState()).toBeNull()
-        }
+        // Logout should not throw even if signOut fails
+        await expect(authModule.logout()).resolves.toBeUndefined()
+
+        // Should have logged the error
+        expect(consoleErrorSpy).toHaveBeenCalled()
       } finally {
         ;(window as any).location = originalLocation
         consoleErrorSpy.mockRestore()
@@ -241,12 +250,16 @@ describe('Auth Module', () => {
 
     it('clears localStorage on logout', async () => {
       // localStorage auth-did should be removed on logout
-      const mockSession = { did: 'did:plc:storage123' }
+      const mockSession = {
+        did: 'did:plc:storage123',
+        signOut: vi.fn().mockResolvedValue(undefined)
+      }
       const mockClient = {
         init: vi.fn().mockResolvedValue({
           session: mockSession,
           state: 'callback'
-        })
+        }),
+        addEventListener: vi.fn()
       }
 
       vi.mocked(BrowserOAuthClient.load).mockResolvedValue(mockClient as any)
@@ -254,13 +267,12 @@ describe('Auth Module', () => {
       const mockAgent = {
         getProfile: vi.fn().mockResolvedValue({
           data: { handle: 'storage.bsky.social' }
-        }),
-        sessionManager: {
-          signOut: vi.fn().mockResolvedValue(undefined)
-        }
+        })
       }
 
-      vi.mocked(Agent).mockImplementation(() => mockAgent as any)
+      vi.mocked(Agent).mockImplementation((function(this: any) {
+        Object.assign(this, mockAgent)
+      }) as any)
 
       const originalLocation = window.location
       delete (window as any).location

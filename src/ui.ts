@@ -130,7 +130,7 @@ export function showAuthSection(onLogin: (handle: string) => void): void {
   }
 
   // Build login form
-  let html = `
+  const html = `
     <div class="auth-form">
       <label for="auth-handle">Bluesky handle:</label>
       <input

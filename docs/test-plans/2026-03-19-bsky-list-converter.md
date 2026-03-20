@@ -7,7 +7,7 @@
 - `npx vitest run` passes all 66 tests
 - For local testing: `npm run dev` starts a dev server (typically at `http://localhost:5173`)
 - A Bluesky account with at least one moderation list available for testing
-- A known public moderation list URL (DID-based and handle-based variants)
+- Test URL: `https://bsky.app/profile/did:plc:2j7aolyu2ys3umoikzy2ikpo/lists/3m54k7cgy4k23`
 
 ## Phase 1: List Reading and Preview
 

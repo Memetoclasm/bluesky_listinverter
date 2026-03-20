@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bluesky List Converter</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1>Bluesky List Converter</h1>
+      <p>Convert a Bluesky moderation list into a curatelist you can pin as a feed.</p>
+
+      <div id="input-section">
+        <label for="list-url">Moderation list URL:</label>
+        <input type="url" id="list-url" placeholder="https://bsky.app/profile/.../lists/..." />
+        <button id="fetch-btn" type="button">Fetch List</button>
+      </div>
+
+      <div id="preview-section" hidden></div>
+      <div id="auth-section" hidden></div>
+      <div id="progress-section" hidden></div>
+      <div id="result-section" hidden></div>
+      <div id="error-section" hidden></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

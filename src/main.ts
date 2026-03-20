@@ -4,7 +4,20 @@
  */
 
 import { parseListUrl, resolveHandleToDid, fetchListMembers, type ListData, type ListMember } from './list-reader'
-import { showError, clearError, showPreview, setLoading, showAuthSection, showLoggedIn, showAuthError } from './ui'
+import {
+  showError,
+  clearError,
+  showPreview,
+  setLoading,
+  showAuthSection,
+  showLoggedIn,
+  showAuthError,
+  showCreateForm,
+  showProgress,
+  showResult,
+  showCreateError
+} from './ui'
+import { createCuratelist } from './list-writer'
 import * as auth from './auth'
 import type { AuthState } from './auth'
 
@@ -15,6 +28,7 @@ export let currentAuthState: AuthState | null = null
 
 /**
  * Handles the login flow.
+ * Redirects to Bluesky for OAuth, which will return here with a session.
  */
 async function handleLogin(handle: string): Promise<void> {
   try {
@@ -24,6 +38,19 @@ async function handleLogin(handle: string): Promise<void> {
     const message = error instanceof Error ? error.message : String(error)
     showAuthError('Could not start login. Check your handle and try again.')
     console.error('Login error:', message)
+  }
+}
+
+/**
+ * Handles the post-login redirect from Bluesky.
+ * Updates auth state and shows create form if list data is available.
+ */
+function handlePostLoginRedirect(authState: AuthState): void {
+  currentAuthState = authState
+
+  // If we have list data from a prior fetch, show the create form
+  if (fetchedListData) {
+    showCreateForm(fetchedListData.list.name, handleCreateCuratelist)
   }
 }
 
@@ -53,6 +80,40 @@ function showAuthUI(): void {
 }
 
 /**
+ * Handles the curatelist creation flow.
+ * Called when user clicks "Create Curatelist" button.
+ */
+async function handleCreateCuratelist(name: string): Promise<void> {
+  if (!fetchedListData || !currentAuthState) {
+    showCreateError('Missing data. Please fetch the list and log in again.', () => {
+      // Retry: show the create form again
+      showCreateForm(fetchedListData?.list.name || 'New Curatelist', handleCreateCuratelist)
+    })
+    return
+  }
+
+  const agent = currentAuthState.agent
+  const memberDids = fetchedMembers.map((m) => m.did)
+  const description = `Converted from ${fetchedListData.list.name}`
+
+  try {
+    // Call createCuratelist with progress callback
+    const result = await createCuratelist(agent, name, description, memberDids, (current, total) => {
+      showProgress(current, total)
+    })
+
+    // Show result
+    showResult(result.listUrl, result.added, result.failed, result.errors)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    showCreateError(`Failed to create curatelist: ${message}`, () => {
+      // Retry: show the create form again
+      showCreateForm(name, handleCreateCuratelist)
+    })
+  }
+}
+
+/**
  * Initializes the main UI flow on DOM load.
  */
 async function initializeUI(): Promise<void> {
@@ -68,7 +129,13 @@ async function initializeUI(): Promise<void> {
   try {
     const authState = await auth.init()
     if (authState) {
-      currentAuthState = authState
+      // Check if this is a post-login redirect with list data
+      if (fetchedListData) {
+        // Show create form after successful login redirect
+        handlePostLoginRedirect(authState)
+      } else {
+        currentAuthState = authState
+      }
     }
   } catch (error) {
     // OAuth callback processing failed - show meaningful error to user
@@ -123,10 +190,13 @@ async function initializeUI(): Promise<void> {
         sampleHandles
       })
 
-      // Show auth section below the preview
-      // If already logged in, show "Logged in as" with logout
-      // If not logged in, show login form
-      showAuthUI()
+      // If already logged in, show create form
+      // Otherwise, show auth section
+      if (currentAuthState) {
+        showCreateForm(listData.list.name, handleCreateCuratelist)
+      } else {
+        showAuthUI()
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       showError(`Could not fetch list. Please check the URL and try again. (${message})`)

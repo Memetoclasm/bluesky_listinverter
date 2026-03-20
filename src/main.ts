@@ -1,19 +1,61 @@
 /**
  * Main Entry Point
- * Wires the list reading and UI modules together.
+ * Wires the list reading, auth, and UI modules together.
  */
 
 import { parseListUrl, resolveHandleToDid, fetchListMembers, type ListData, type ListMember } from './list-reader'
-import { showError, clearError, showPreview, setLoading } from './ui'
+import { showError, clearError, showPreview, setLoading, showAuthSection, showLoggedIn, showAuthError } from './ui'
+import * as auth from './auth'
+import type { AuthState } from './auth'
 
 // Module-level variables to store fetched data for later use (Phase 4+)
 export let fetchedListData: ListData | null = null
 export let fetchedMembers: ListMember[] = []
+export let currentAuthState: AuthState | null = null
+
+/**
+ * Handles the login flow.
+ */
+async function handleLogin(handle: string): Promise<void> {
+  try {
+    await auth.login(handle)
+    // This redirect normally doesn't return, but catch it just in case
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    showAuthError('Could not start login. Check your handle and try again.')
+    console.error('Login error:', message)
+  }
+}
+
+/**
+ * Handles the logout flow.
+ */
+async function handleLogout(): Promise<void> {
+  try {
+    await auth.logout()
+    currentAuthState = null
+    // Show login form again
+    showAuthSection(handleLogin)
+  } catch (error) {
+    console.error('Logout error:', error)
+  }
+}
+
+/**
+ * Shows appropriate auth UI based on current auth state.
+ */
+function showAuthUI(): void {
+  if (currentAuthState) {
+    showLoggedIn(currentAuthState.handle, handleLogout)
+  } else {
+    showAuthSection(handleLogin)
+  }
+}
 
 /**
  * Initializes the main UI flow on DOM load.
  */
-function initializeUI(): void {
+async function initializeUI(): Promise<void> {
   const listUrlInput = document.getElementById('list-url') as HTMLInputElement | null
   const fetchBtn = document.getElementById('fetch-btn') as HTMLButtonElement | null
 
@@ -21,6 +63,23 @@ function initializeUI(): void {
     console.error('Required elements not found in DOM')
     return
   }
+
+  // Step 1: Initialize auth - check for OAuth callback or existing session
+  try {
+    const authState = await auth.init()
+    if (authState) {
+      currentAuthState = authState
+    }
+  } catch (error) {
+    // OAuth callback processing failed
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('Auth initialization error:', message)
+    showError('Authentication error. Please try again.')
+  }
+
+  // Show auth UI based on current auth state
+  // This is shown if there's list data from a prior fetch or after a fetch
+  // For now, just initialize it
 
   // Add click handler to fetch button
   fetchBtn.addEventListener('click', async () => {
@@ -62,6 +121,11 @@ function initializeUI(): void {
         memberCount: listData.members.length,
         sampleHandles
       })
+
+      // Show auth section below the preview
+      // If already logged in, show "Logged in as" with logout
+      // If not logged in, show login form
+      showAuthUI()
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       showError(`Could not fetch list. Please check the URL and try again. (${message})`)

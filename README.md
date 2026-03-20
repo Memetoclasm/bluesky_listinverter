@@ -4,9 +4,7 @@ Convert Bluesky moderation lists into curatelists that you can pin as feeds.
 
 ## Live App
 
-Try the tool here: https://{USERNAME}.github.io/bsky-list-converter/
-
-> **Note:** Replace `{USERNAME}` with the GitHub username of your fork.
+Try the tool here: https://memetoclasm.github.io/bsky-list-converter/
 
 ## How It Works
 
@@ -29,7 +27,7 @@ Try the tool here: https://{USERNAME}.github.io/bsky-list-converter/
 ### Installation
 
 ```bash
-git clone https://github.com/{USERNAME}/bsky-list-converter
+git clone https://github.com/memetoclasm/bsky-list-converter
 cd bsky-list-converter
 npm install
 ```
@@ -63,19 +61,21 @@ The production build is output to the `dist/` directory.
 
 ### Deploying to GitHub Pages
 
-1. **Update `public/client-metadata.json`:**
+1. **Enable GitHub Pages** (required before the app will work):
 
-   Replace `{USERNAME}` in the file with your actual GitHub username. This is required for the OAuth flow to work correctly.
+   - Go to your repository **Settings → Pages**
+   - Under **Source**, select **GitHub Actions**
+   - Save — the site will deploy automatically on the next push to `main`
 
-2. **Enable GitHub Pages:**
+   Without this step, the app URL will return a 404.
 
-   - Go to your repository settings → Pages
-   - Select **GitHub Actions** as the source
-   - The site will deploy automatically on push to `main`
+2. **Update `public/client-metadata.json`:**
 
-3. **Verify the OAuth metadata is served:**
+   If you fork this repo, replace `memetoclasm` in the file with your GitHub org or username. The OAuth URLs must match your GitHub Pages domain for login to work.
 
-   After deployment, visit `https://{USERNAME}.github.io/bsky-list-converter/client-metadata.json` and confirm it returns valid JSON with your correct GitHub Pages URLs.
+3. **Verify the deployment:**
+
+   After the Actions workflow completes, visit `https://memetoclasm.github.io/bsky-list-converter/client-metadata.json` and confirm it returns valid JSON.
 
 ## Tech Stack
 

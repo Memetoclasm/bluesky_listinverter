@@ -1,8 +1,8 @@
 {
-  "client_id": "https://memetoclasm.github.io/bsky-list-converter/client-metadata.json",
+  "client_id": "https://memetoclasm.github.io/bsky_listinverter/client-metadata.json",
   "client_name": "Bluesky List Converter",
-  "client_uri": "https://memetoclasm.github.io/bsky-list-converter",
-  "redirect_uris": ["https://memetoclasm.github.io/bsky-list-converter/"],
+  "client_uri": "https://memetoclasm.github.io/bsky_listinverter",
+  "redirect_uris": ["https://memetoclasm.github.io/bsky_listinverter/"],
   "scope": "atproto transition:generic",
   "grant_types": ["authorization_code", "refresh_token"],
   "response_types": ["code"],

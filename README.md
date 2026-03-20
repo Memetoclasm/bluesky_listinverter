@@ -64,10 +64,10 @@ The production build is output to the `dist/` directory.
 1. **Enable GitHub Pages** (required before the app will work):
 
    - Go to your repository **Settings → Pages**
-   - Under **Source**, select **GitHub Actions**
+   - Under **Source**, select **GitHub Actions** (not "Deploy from a branch")
    - Save — the site will deploy automatically on the next push to `main`
 
-   Without this step, the app URL will return a 404.
+   **Important:** If you select "Deploy from a branch" instead, GitHub will serve the raw source files rather than the built app, and nothing will work.
 
 2. **Update `public/client-metadata.json`:**
 

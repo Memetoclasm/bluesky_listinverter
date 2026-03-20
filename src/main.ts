@@ -151,8 +151,8 @@ async function initializeUI(): Promise<void> {
   } catch (error) {
     // OAuth callback processing failed - show meaningful error to user
     const message = error instanceof Error ? error.message : String(error)
-    console.error('Auth initialization error:', message)
-    showError('Authentication failed. Please try again.')
+    console.error('Auth initialization error:', error)
+    showError(`Authentication failed: ${message}`)
     return
   }
 

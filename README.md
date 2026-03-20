@@ -4,7 +4,7 @@ Convert Bluesky moderation lists into curatelists that you can pin as feeds.
 
 ## Live App
 
-Try the tool here: https://memetoclasm.github.io/bsky-list-converter/
+Try the tool here: https://memetoclasm.github.io/bluesky_listinverter/
 
 ## How It Works
 
@@ -27,8 +27,8 @@ Try the tool here: https://memetoclasm.github.io/bsky-list-converter/
 ### Installation
 
 ```bash
-git clone https://github.com/memetoclasm/bsky-list-converter
-cd bsky-list-converter
+git clone https://github.com/memetoclasm/bluesky_listinverter
+cd bluesky_listinverter
 npm install
 ```
 
@@ -75,7 +75,7 @@ The production build is output to the `dist/` directory.
 
 3. **Verify the deployment:**
 
-   After the Actions workflow completes, visit `https://memetoclasm.github.io/bsky-list-converter/client-metadata.json` and confirm it returns valid JSON.
+   After the Actions workflow completes, visit `https://memetoclasm.github.io/bluesky_listinverter/client-metadata.json` and confirm it returns valid JSON.
 
 ## Tech Stack
 

@@ -31,7 +31,7 @@ let currentSession: any = null
 export async function init(): Promise<AuthState | null> {
   // Load or create the BrowserOAuthClient
   client = await BrowserOAuthClient.load({
-    clientId: window.location.origin + '/bsky-list-converter/client-metadata.json',
+    clientId: window.location.origin + '/bluesky_listinverter/client-metadata.json',
     handleResolver: 'https://bsky.social'
   })
 

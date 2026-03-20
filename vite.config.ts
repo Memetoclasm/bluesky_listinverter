@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: '/bsky-list-converter/',
+  base: '/bluesky_listinverter/',
   build: {
     rollupOptions: {
       output: {

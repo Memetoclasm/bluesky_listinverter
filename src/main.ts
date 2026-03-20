@@ -48,6 +48,9 @@ async function handleLogin(handle: string): Promise<void> {
 function handlePostLoginRedirect(authState: AuthState): void {
   currentAuthState = authState
 
+  // Show logged-in state in the auth section
+  showLoggedIn(authState.handle, handleLogout)
+
   // If we have list data from a prior fetch, show the create form
   if (fetchedListData) {
     showCreateForm(fetchedListData.list.name, handleCreateCuratelist)
@@ -84,6 +87,12 @@ function showAuthUI(): void {
  * Called when user clicks "Create Curatelist" button.
  */
 async function handleCreateCuratelist(name: string): Promise<void> {
+  // Disable the create button to prevent duplicate submissions
+  const createBtn = document.getElementById('create-curatelist-btn') as HTMLButtonElement | null
+  if (createBtn) {
+    createBtn.disabled = true
+  }
+
   if (!fetchedListData || !currentAuthState) {
     showCreateError('Missing data. Please fetch the list and log in again.', () => {
       // Retry: show the create form again

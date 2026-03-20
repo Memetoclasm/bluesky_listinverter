@@ -73,12 +73,12 @@ export async function createCuratelist(
 
   for (let i = 0; i < memberDids.length; i++) {
     const memberDid = memberDids[i]
-    let success = false
+    let done = false
     let retries = 0
     const maxRetries = 5
 
     // Retry loop for rate limiting
-    while (!success && retries <= maxRetries) {
+    while (!done && retries <= maxRetries) {
       try {
         await agent.com.atproto.repo.createRecord({
           repo: agent.did!,
@@ -91,7 +91,7 @@ export async function createCuratelist(
           }
         })
 
-        success = true
+        done = true
         added++
         backoffDelay = 2000 // Reset backoff delay on success
 
@@ -122,7 +122,7 @@ export async function createCuratelist(
               did: memberDid,
               error: 'Rate limit: exceeded max retries'
             })
-            success = true // Exit retry loop
+            done = true // Exit retry loop
           }
         } else {
           // Non-429 error: collect and continue
@@ -131,7 +131,7 @@ export async function createCuratelist(
             did: memberDid,
             error: errorMessage
           })
-          success = true // Exit retry loop
+          done = true // Exit retry loop
         }
       }
     }

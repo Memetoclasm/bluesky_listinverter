@@ -244,6 +244,12 @@ export function showCreateForm(listName: string, onCreate: (name: string) => voi
   const previewSection = document.getElementById('preview-section')
   if (!previewSection) return
 
+  // Remove any existing form to prevent duplicates
+  const existingForm = previewSection.querySelector('.create-form')
+  if (existingForm) {
+    existingForm.remove()
+  }
+
   // Add create form below the preview
   const formHtml = `
     <div class="create-form" style="margin-top: 2em; padding: 1em; border-top: 1px solid #ccc;">
@@ -330,6 +336,12 @@ export function showResult(
   failed: number,
   errors: Array<{ did: string; error: string }>
 ): void {
+  // Hide progress section when showing results
+  const progressSection = document.getElementById('progress-section')
+  if (progressSection) {
+    progressSection.hidden = true
+  }
+
   const resultSection = document.getElementById('result-section')
   if (!resultSection) return
 
@@ -385,6 +397,12 @@ export function showResult(
  * @param onRetry - Callback when user clicks the retry button
  */
 export function showCreateError(message: string, onRetry: () => void): void {
+  // Hide progress section when showing error
+  const progressSection = document.getElementById('progress-section')
+  if (progressSection) {
+    progressSection.hidden = true
+  }
+
   const resultSection = document.getElementById('result-section')
   if (!resultSection) return
 

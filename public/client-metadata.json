@@ -1,0 +1,12 @@
+{
+  "client_id": "https://{USERNAME}.github.io/bsky-list-converter/client-metadata.json",
+  "client_name": "Bluesky List Converter",
+  "client_uri": "https://{USERNAME}.github.io/bsky-list-converter",
+  "redirect_uris": ["https://{USERNAME}.github.io/bsky-list-converter/"],
+  "scope": "atproto transition:generic",
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none",
+  "application_type": "web",
+  "dpop_bound_access_tokens": true
+}

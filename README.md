@@ -1,6 +1,6 @@
 # Bluesky List Converter
 
-Convert Bluesky moderation lists into curatelists that you can pin as feeds.
+Convert Bluesky moderation lists into curatelists that you can pin as feeds. (Thanks to @bitterbitch.bsky.social and @danifroom.bsky.social for the inspiration)
 
 ## Live App
 

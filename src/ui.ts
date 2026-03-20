@@ -232,3 +232,176 @@ export function showAuthError(message: string): void {
   // Append to auth section (after login form)
   authSection.appendChild(errorDiv)
 }
+
+/**
+ * Shows the create form within the preview section.
+ * Displays an editable text input pre-filled with the list name and a create button.
+ *
+ * @param listName - The default name for the new curatelist
+ * @param onCreate - Callback when user clicks the create button with the input value
+ */
+export function showCreateForm(listName: string, onCreate: (name: string) => void): void {
+  const previewSection = document.getElementById('preview-section')
+  if (!previewSection) return
+
+  // Add create form below the preview
+  const formHtml = `
+    <div class="create-form" style="margin-top: 2em; padding: 1em; border-top: 1px solid #ccc;">
+      <label for="curatelist-name" style="display: block; margin-bottom: 0.5em;">
+        Curatelist name:
+      </label>
+      <input
+        type="text"
+        id="curatelist-name"
+        maxlength="64"
+        value="${escapeHtml(listName)}"
+        style="width: 100%; padding: 0.5em; margin-bottom: 1em; box-sizing: border-box;"
+      />
+      <button id="create-curatelist-btn" type="button" style="padding: 0.5em 1em;">
+        Create Curatelist
+      </button>
+    </div>
+  `
+
+  previewSection.innerHTML += formHtml
+
+  // Set up event listener
+  const createBtn = previewSection.querySelector('#create-curatelist-btn') as HTMLButtonElement | null
+  const nameInput = previewSection.querySelector('#curatelist-name') as HTMLInputElement | null
+
+  if (createBtn && nameInput) {
+    const handleCreate = () => {
+      const name = nameInput.value.trim()
+      if (name) {
+        onCreate(name)
+      }
+    }
+
+    // Allow Enter key to submit
+    nameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleCreate()
+      }
+    })
+
+    createBtn.addEventListener('click', handleCreate)
+  }
+}
+
+/**
+ * Shows the progress section during member addition.
+ * Displays a progress bar and current progress text.
+ *
+ * @param current - The current member number being added
+ * @param total - The total number of members to add
+ */
+export function showProgress(current: number, total: number): void {
+  const progressSection = document.getElementById('progress-section')
+  if (!progressSection) return
+
+  const html = `
+    <div class="progress-container">
+      <p>Adding member ${current} of ${total}...</p>
+      <progress
+        id="member-progress"
+        value="${current}"
+        max="${total}"
+        style="width: 100%; height: 2em;"
+      ></progress>
+    </div>
+  `
+
+  progressSection.innerHTML = html
+  progressSection.hidden = false
+}
+
+/**
+ * Shows the result section with completion summary.
+ * Displays a success/partial success message, a link to the new list, and error details if any.
+ *
+ * @param listUrl - The bsky.app URL for the new curatelist
+ * @param added - The number of members successfully added
+ * @param failed - The number of members that failed to add
+ * @param errors - Array of error details for failed members
+ */
+export function showResult(
+  listUrl: string,
+  added: number,
+  failed: number,
+  errors: Array<{ did: string; error: string }>
+): void {
+  const resultSection = document.getElementById('result-section')
+  if (!resultSection) return
+
+  const total = added + failed
+
+  // Build summary message
+  let summary: string
+  if (failed === 0) {
+    summary = `Successfully added all ${added} members!`
+  } else {
+    summary = `Added ${added} of ${total}. ${failed} failed.`
+  }
+
+  let html = `
+    <div class="result-container">
+      <p>${escapeHtml(summary)}</p>
+      <p>
+        <a href="${escapeHtml(listUrl)}" target="_blank">
+          View your new curatelist
+        </a>
+      </p>
+  `
+
+  // Add error details if any
+  if (errors.length > 0) {
+    html += `
+      <details style="margin-top: 1em;">
+        <summary>Failed members (${errors.length})</summary>
+        <ul style="margin-top: 0.5em;">
+    `
+    for (const error of errors) {
+      html += `<li>${escapeHtml(error.did)}: ${escapeHtml(error.error)}</li>`
+    }
+    html += `
+        </ul>
+      </details>
+    `
+  }
+
+  html += `
+    </div>
+  `
+
+  resultSection.innerHTML = html
+  resultSection.hidden = false
+}
+
+/**
+ * Shows the result section with an error message and retry button.
+ * Used when list creation itself fails.
+ *
+ * @param message - The error message to display
+ * @param onRetry - Callback when user clicks the retry button
+ */
+export function showCreateError(message: string, onRetry: () => void): void {
+  const resultSection = document.getElementById('result-section')
+  if (!resultSection) return
+
+  const html = `
+    <div class="error-container">
+      <p style="color: red;">${escapeHtml(message)}</p>
+      <button id="create-retry-btn" type="button" style="padding: 0.5em 1em;">
+        Retry
+      </button>
+    </div>
+  `
+
+  resultSection.innerHTML = html
+  resultSection.hidden = false
+
+  const retryBtn = resultSection.querySelector('#create-retry-btn') as HTMLButtonElement | null
+  if (retryBtn) {
+    retryBtn.addEventListener('click', onRetry)
+  }
+}

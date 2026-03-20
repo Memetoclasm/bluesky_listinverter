@@ -75,7 +75,7 @@ The production build is output to the `dist/` directory.
 
 3. **Verify the OAuth metadata is served:**
 
-   After deployment, visit `https://YOUR_USERNAME.github.io/bsky-list-converter/client-metadata.json` and confirm it returns valid JSON with your correct GitHub Pages URLs.
+   After deployment, visit `https://{USERNAME}.github.io/bsky-list-converter/client-metadata.json` and confirm it returns valid JSON with your correct GitHub Pages URLs.
 
 ## Tech Stack
 
@@ -89,12 +89,12 @@ The production build is output to the `dist/` directory.
 
 ## Features
 
-- ✅ Read any public Bluesky moderation list
-- ✅ Preview list members before action
-- ✅ OAuth login with Bluesky (secure, no password stored)
-- ✅ Create a curatelist from list members
-- ✅ Fully responsive design (mobile & desktop)
-- ✅ No external dependencies or build bloat
+- Read any public Bluesky moderation list
+- Preview list members before action
+- OAuth login with Bluesky (secure, no password stored)
+- Create a curatelist from list members
+- Fully responsive design (mobile & desktop)
+- No external dependencies or build bloat
 
 ## License
 

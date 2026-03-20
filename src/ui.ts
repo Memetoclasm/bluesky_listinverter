@@ -224,7 +224,7 @@ export function showAuthError(message: string): void {
   const errorDiv = document.createElement('div')
   errorDiv.className = 'auth-error'
   errorDiv.innerHTML = `
-    <p style="color: red; margin-top: 1em;">
+    <p>
       ${escapeHtml(message)}
     </p>
   `
@@ -252,8 +252,8 @@ export function showCreateForm(listName: string, onCreate: (name: string) => voi
 
   // Add create form below the preview
   const formHtml = `
-    <div class="create-form" style="margin-top: 2em; padding: 1em; border-top: 1px solid #ccc;">
-      <label for="curatelist-name" style="display: block; margin-bottom: 0.5em;">
+    <div class="create-form">
+      <label for="curatelist-name">
         Curatelist name:
       </label>
       <input
@@ -261,9 +261,8 @@ export function showCreateForm(listName: string, onCreate: (name: string) => voi
         id="curatelist-name"
         maxlength="64"
         value="${escapeHtml(listName)}"
-        style="width: 100%; padding: 0.5em; margin-bottom: 1em; box-sizing: border-box;"
       />
-      <button id="create-curatelist-btn" type="button" style="padding: 0.5em 1em;">
+      <button id="create-curatelist-btn" type="button">
         Create Curatelist
       </button>
     </div>
@@ -312,7 +311,6 @@ export function showProgress(current: number, total: number): void {
         id="member-progress"
         value="${current}"
         max="${total}"
-        style="width: 100%; height: 2em;"
       ></progress>
     </div>
   `
@@ -368,9 +366,9 @@ export function showResult(
   // Add error details if any
   if (errors.length > 0) {
     html += `
-      <details style="margin-top: 1em;">
+      <details>
         <summary>Failed members (${errors.length})</summary>
-        <ul style="margin-top: 0.5em;">
+        <ul>
     `
     for (const error of errors) {
       html += `<li>${escapeHtml(error.did)}: ${escapeHtml(error.error)}</li>`
@@ -408,8 +406,8 @@ export function showCreateError(message: string, onRetry: () => void): void {
 
   const html = `
     <div class="error-container">
-      <p style="color: red;">${escapeHtml(message)}</p>
-      <button id="create-retry-btn" type="button" style="padding: 0.5em 1em;">
+      <p>${escapeHtml(message)}</p>
+      <button id="create-retry-btn" type="button">
         Retry
       </button>
     </div>

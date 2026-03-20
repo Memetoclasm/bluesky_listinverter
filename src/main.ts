@@ -1,3 +1,5 @@
+import './style.css'
+
 /**
  * Main Entry Point
  * Wires the list reading, auth, and UI modules together.

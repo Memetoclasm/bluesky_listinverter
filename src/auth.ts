@@ -18,6 +18,7 @@ export interface AuthState {
 // Store the current auth client instance
 let client: BrowserOAuthClient | null = null
 let currentAuthState: AuthState | null = null
+// @atproto/oauth-client-browser does not export the Session type, so we use any
 let currentSession: any = null
 
 /**
@@ -35,6 +36,7 @@ export async function init(): Promise<AuthState | null> {
   })
 
   // Register listener for cross-tab session invalidation
+  // BrowserOAuthClient type definitions don't include addEventListener method (browser event API)
   ;(client as any).addEventListener('deleted', () => {
     currentAuthState = null
     currentSession = null
@@ -74,8 +76,10 @@ export async function init(): Promise<AuthState | null> {
 
     return currentAuthState
   } catch (error) {
-    // If profile fetch fails, propagate the error to the caller
-    throw error
+    // If profile fetch fails (network error, etc.), return null instead of throwing
+    // The session is valid but we cannot fetch the profile, so authentication is incomplete
+    console.error('Failed to fetch user profile:', error)
+    return null
   }
 }
 

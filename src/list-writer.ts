@@ -98,6 +98,8 @@ export async function createCuratelist(
         // Wait 100ms before next member (throttle delay)
         await new Promise((resolve) => setTimeout(resolve, 100))
       } catch (error) {
+        // Cast to any to safely access error properties that may not be typed
+        // (status code and headers may not be defined on the Error type)
         const errorObj = error as any
 
         // Check for rate limit (429)

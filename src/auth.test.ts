@@ -109,6 +109,54 @@ describe('Auth Module', () => {
         ;(window as any).location = originalLocation
       }
     })
+
+    it('returns null when profile fetch fails despite valid session', async () => {
+      // When client.init() succeeds and session is valid,
+      // but agent.getProfile() fails (network error, etc.),
+      // init() should return null instead of throwing
+      const mockSession = { did: 'did:plc:test456' }
+      const mockClient = {
+        init: vi.fn().mockResolvedValue({
+          session: mockSession,
+          state: 'callback-token'
+        }),
+        addEventListener: vi.fn()
+      }
+
+      vi.mocked(BrowserOAuthClient.load).mockResolvedValue(mockClient as any)
+
+      // Mock agent.getProfile() to reject
+      const mockAgent = {
+        getProfile: vi.fn().mockRejectedValue(new Error('Network error fetching profile'))
+      }
+
+      vi.mocked(Agent).mockImplementation((function(this: any) {
+        Object.assign(this, mockAgent)
+      }) as any)
+
+      const originalLocation = window.location
+      delete (window as any).location
+      ;(window as any).location = { origin: 'http://localhost:3000' }
+
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
+
+      try {
+        const result = await authModule.init()
+
+        // Should return null, not throw
+        expect(result).toBeNull()
+        // Error should be logged
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to fetch user profile:',
+          expect.any(Error)
+        )
+      } finally {
+        ;(window as any).location = originalLocation
+        consoleErrorSpy.mockRestore()
+      }
+    })
   })
 
   describe('login', () => {

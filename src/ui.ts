@@ -268,7 +268,8 @@ export function showCreateForm(listName: string, onCreate: (name: string) => voi
     </div>
   `
 
-  previewSection.innerHTML += formHtml
+  // Use insertAdjacentHTML instead of innerHTML += to preserve existing event listeners
+  previewSection.insertAdjacentHTML('beforeend', formHtml)
 
   // Set up event listener
   const createBtn = previewSection.querySelector('#create-curatelist-btn') as HTMLButtonElement | null
